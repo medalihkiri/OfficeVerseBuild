@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="theme-color" content="#050505">
+    <title>Office Dar Blockchain</title>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- UNITY & AGORA STYLES (Preserved) -->
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="AgoraWebSDK/style.css">
+    <link rel="stylesheet" href="TemplateData/style.css">
+
+    <!-- AGORA SCRIPTS (Preserved) -->
+    <script src="AgoraWebSDK/libs/agora-extension-virtual-background.js"></script>
+    <script src="AgoraWebSDK/libs/virtualbackground.js"></script>
+    <script src="AgoraWebSDK/libs/databuilder.js"></script>
+    <script src="AgoraWebSDK/libs/clientmanager.js"></script>
+    <script src="AgoraWebSDK/libs/wglwrapper.js"></script>
+    <script src="AgoraWebSDK/libs/audioeffects.js"></script>
+    <script src="AgoraWebSDK/libs/eventmanager.js"></script>
+    <script src="AgoraWebSDK/libs/engineglobals.js"></script>
+    <script src="AgoraWebSDK/libs/watermark.js"></script>
+    <script src="AgoraWebSDK/libs/customvideo.js"></script>
+    <script src="AgoraWebSDK/libs/agorachannel.js"></script>
+    <script src="AgoraWebSDK/libs/multichannel.js"></script>
+    <script src="AgoraWebSDK/libs/audiosystem.js"></script>
+    <script src="AgoraWebSDK/libs/testing.js"></script>
+    <script src="AgoraWebSDK/libs/agorautils.js"></script>
+    <script src="AgoraWebSDK/libs/audiomixing.js"></script>
+    <script src="AgoraWebSDK/agorartcenginev2.js"></script>
+    <script src="AgoraRTC_N.js"></script>
+    <script src="AgoraWebSDK/libs/spatial-audio-main.js" type="module"></script>
+    <script src="AgoraWebSDK/vendor/jquery.min.js"></script>
+    <script src="AgoraWebSDK/vendor/materialize.min.js"></script>
+
+    <!-- MOBILE VIEWPORT FIX -->
+    <script>
+        function setVh() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        window.addEventListener('resize', setVh);
+        setVh();
+    </script>
+
+    <style>
+        /* --- PREMIUM DESIGN SYSTEM (2025) --- */
+        :root {
+            --bg-dark: #050505;
+            --bg-panel: rgba(20, 20, 20, 0.6);
+            --grid-color: rgba(255, 255, 255, 0.04);
+            --accent-primary: #CCFF00;
+            --accent-glow: rgba(204, 255, 0, 0.15);
+            --accent-alert: #FF0055;
+            --accent-safe: #00E5FF;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --text-main: #EDEDED;
+            --text-muted: #888;
+            --nav-height: 70px;
+        }
+
+        /* --- RESET & BASE --- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-display);
+            overflow: hidden;
+            height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
+            width: 100vw;
+            -webkit-font-smoothing: antialiased;
+            cursor: crosshair;
+        }
+
+            body.game-mode {
+                cursor: default;
+            }
+
+        /* --- POLISH: SCROLLBARS --- */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: var(--accent-primary);
+            }
+
+        ::selection {
+            background: var(--accent-primary);
+            color: #000;
+        }
+
+        /* --- FX LAYERS --- */
+        @keyframes scanline-move {
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 0 100%;
+            }
+        }
+
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.1) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 9000;
+            opacity: 0.25;
+            animation: scanline-move 10s linear infinite;
+        }
+
+        .vignette {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle, transparent 40%, #000 130%);
+            pointer-events: none;
+            z-index: 8000;
+        }
+
+        body.game-mode .scanlines, body.game-mode .vignette {
+            display: none;
+        }
+
+        /* --- UNITY GAME LAYER --- */
+        #game-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            visibility: hidden;
+            background: #000;
+            opacity: 0;
+            transition: visibility 0s 0.8s, opacity 0.8s ease;
+        }
+
+            #game-layer.active {
+                visibility: visible;
+                opacity: 1;
+                transition: opacity 0.5s ease;
+            }
+
+        /* --- LANDING SCROLL LAYER --- */
+        #landing-layer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background-color: var(--bg-dark);
+            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 60px 60px;
+            background-attachment: local;
+        }
+
+        /* --- SPRITE WORLD --- */
+        #world-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100vh;
+            pointer-events: none;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            height: var(--nav-height);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(5, 5, 5, 0.9);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .brand-badge {
+            font-family: var(--font-code);
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 16px;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* --- HERO SECTION --- */
+        .hero-section {
+            position: relative;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 20;
+            padding-top: var(--nav-height);
+            pointer-events: none;
+        }
+
+            .hero-section > * {
+                pointer-events: auto;
+            }
+
+        h1 {
+            font-size: clamp(3rem, 7vw, 7rem);
+            line-height: 0.9;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin: 0 0 24px 0;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255,255,255,0.3);
+            background: linear-gradient(180deg, #FFFFFF 0%, rgba(255,255,255,0.4) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-family: var(--font-code);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            max-width: 500px;
+            margin-bottom: 60px;
+            background: rgba(0,0,0,0.6);
+            padding: 12px 20px;
+            border-left: 2px solid var(--accent-primary);
+            backdrop-filter: blur(4px);
+        }
+
+        .cyber-btn {
+            position: relative;
+            background: var(--text-main);
+            color: #000;
+            font-family: var(--font-code);
+            font-weight: 800;
+            font-size: 0.85rem;
+            padding: 18px 45px;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+            .cyber-btn:hover {
+                background: var(--accent-primary);
+                box-shadow: 0 0 30px var(--accent-glow);
+                transform: translateY(-2px);
+            }
+
+        /* --- FEATURE CARDS --- */
+        .features-wrap {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .feature-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(255,255,255,0.06);
+            backdrop-filter: blur(10px);
+            padding: 28px;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+
+            .feature-card:hover {
+                border-color: var(--accent-primary);
+            }
+
+        .f-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 8px 0;
+            color: #fff;
+        }
+
+        .f-desc {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* --- ZONES (HUD) --- */
+        #hud-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .zone {
+            position: absolute;
+            background: rgba(255,255,255,0.01);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+            .zone::before, .zone::after {
+                content: '';
+                position: absolute;
+                width: 10px;
+                height: 10px;
+                border: 1px solid rgba(255,255,255,0.4);
+                transition: all 0.3s;
+                opacity: 1;
+            }
+
+            .zone::before {
+                top: 0;
+                left: 0;
+                border-right: 0;
+                border-bottom: 0;
+            }
+
+            .zone::after {
+                bottom: 0;
+                right: 0;
+                border-left: 0;
+                border-top: 0;
+            }
+
+        .zone-label {
+            position: absolute;
+            top: -16px;
+            left: 0;
+            font-family: var(--font-code);
+            font-size: 0.55rem;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .zone.active::before, .zone.active::after {
+            border-color: var(--accent-primary);
+            width: 100%;
+            height: 100%;
+        }
+
+        .zone.active .zone-label {
+            color: var(--accent-primary);
+        }
+
+        /* LOCKED ZONE STYLE */
+        .zone.locked-zone {
+            background: rgba(255, 0, 85, 0.08);
+        }
+
+            .zone.locked-zone::before, .zone.locked-zone::after {
+                border-color: #552222;
+            }
+
+            .zone.locked-zone .zone-label {
+                color: #aa4444;
+            }
+
+        @keyframes lock-pulse {
+            0% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
+        }
+
+        .zone.locked-zone.hit {
+            animation: lock-pulse 0.2s ease;
+            border-color: var(--accent-alert);
+        }
+
+        /* --- COMPOSITION GRID --- */
+        /* Left Stack: Private Desks */
+        #zone-p1 {
+            width: 140px;
+            height: 120px;
+            left: 6%;
+            top: 22vh;
+        }
+
+        #zone-p2 {
+            width: 140px;
+            height: 120px;
+            left: 6%;
+            top: 40vh;
+        }
+
+        #zone-p3 {
+            width: 140px;
+            height: 120px;
+            left: 6%;
+            top: 58vh;
+        }
+
+        /* Right: Broadcast Hub (MOVED UP to align with P1) */
+        #zone-broadcast {
+            width: 300px;
+            height: 260px;
+            right: 8%;
+            top: 22vh;
+        }
+
+        /* --- SPRITES & MICRO-BUBBLES --- */
+        .sprite {
+            width: 32px;
+            height: 32px;
+            position: absolute;
+            background-image: url('TemplateData/avatar.png');
+            background-repeat: no-repeat;
+            image-rendering: pixelated;
+            will-change: transform;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5));
+        }
+
+        .bubble {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            background: #fff;
+            color: #000;
+            border: 1px solid #000;
+            font-family: var(--font-code);
+            font-size: 0.5rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            line-height: 1;
+            text-transform: uppercase;
+            padding: 2px 4px;
+            border-radius: 2px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.1s ease-out;
+            box-shadow: 1px 1px 0px rgba(0,0,0,0.8);
+            z-index: 200;
+        }
+
+            .bubble::after {
+                content: '';
+                position: absolute;
+                bottom: -3px;
+                left: 50%;
+                transform: translateX(-50%);
+                border-width: 3px 3px 0;
+                border-style: solid;
+                border-color: #000 transparent transparent transparent;
+            }
+
+            .bubble.visible {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+
+        .sprite .bubble#player-bubble-internal {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+            .sprite .bubble#player-bubble-internal::after {
+                border-top-color: var(--accent-primary);
+            }
+
+        .sprite .bubble.alert {
+            background: var(--accent-alert) !important;
+            border-color: var(--accent-alert) !important;
+            color: white !important;
+        }
+
+            .sprite .bubble.alert::after {
+                border-top-color: var(--accent-alert) !important;
+            }
+
+        /* --- FOOTER --- */
+        footer {
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding: 40px 20px;
+            text-align: center;
+            font-family: var(--font-code);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            background: rgba(5,5,5,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 30;
+            position: relative;
+        }
+
+        .bottom-fog {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(to top, #050505 0%, transparent 100%);
+            z-index: 12;
+            pointer-events: none;
+        }
+
+        #unity-mobile-warning {
+            display: none;
+            background: var(--accent-alert);
+            color: white;
+            padding: 10px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 10000;
+            text-align: center;
+            font-family: var(--font-code);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 3rem;
+            }
+
+            #hud-layer {
+                opacity: 0;
+                pointer-events: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div id="landing-layer">
+        <nav>
+            <div class="brand-badge">Office Dar Blockchain</div>
+            <div id="online-counter" style="font-family:var(--font-code); font-size:0.65rem; color:var(--accent-primary);">● ONLINE</div>
+        </nav>
+
+        <div id="world-container">
+            <div class="bottom-fog"></div>
+        </div>
+
+        <section class="hero-section">
+            <h1>Web Based<br>Metaverse</h1>
+
+            <div class="hero-sub">
+                // PROTOCOL: WEBRTC<br>
+                // RENDER: CANVAS 2D + WEBGL<br>
+                > Click to explore the grid...
+            </div>
+
+            <button class="cyber-btn" onclick="handlePlay()">
+                Initialize System <span id="btn-status">[0%]</span>
+            </button>
+
+            <!-- ZONES & ROOMS -->
+            <div id="hud-layer">
+                <div class="zone" id="zone-p1"><div class="zone-label">PVT DESK // ISOLATED</div></div>
+                <div class="zone locked-zone" id="zone-p2"><div class="zone-label">RESTRICTED // ADMIN</div></div>
+                <div class="zone" id="zone-p3"><div class="zone-label">PVT DESK // ISOLATED</div></div>
+                <div class="zone" id="zone-broadcast"><div class="zone-label">MEETING HUB // OPEN MIC</div></div>
+            </div>
+        </section>
+
+        <div class="features-wrap">
+            <div class="feature-card">
+                <div class="f-title">01 // PRIVATE DESKS (LEFT)</div>
+                <p class="f-desc">Claim an isolated bubble. When inside a desk, you can only hear and see others inside the same desk.</p>
+            </div>
+            <div class="feature-card">
+                <div class="f-title">02 // MEETING HUB (RIGHT)</div>
+                <p class="f-desc">A large collaborative space for teaching and teamwork. All voices and video feeds are shared.</p>
+            </div>
+            <div class="feature-card">
+                <div class="f-title">03 // SPATIAL AUDIO</div>
+                <p class="f-desc">Proximity-based voice attenuation. The closer you are, the louder they sound in open areas.</p>
+            </div>
+        </div>
+
+        <footer>
+            BUILD 0.1 // DefaultCompany &copy; 2025
+        </footer>
+    </div>
+
+    <div id="loading-screen">
+        <div style="width:200px; background:#222; height:2px; overflow:hidden;">
+            <div class="loader-bar" id="load-bar"></div>
+        </div>
+        <p style="font-family:var(--font-code); font-size:0.6rem; color:#666; margin-top:10px;">LOADING RESOURCES...</p>
+    </div>
+
+    <!-- UNITY CONTAINER -->
+    <div id="game-layer">
+        <div class="webgl-content" style="width: 100%; height: 100%;">
+            <div id="unity-container" style="width: 100%; height: 100%;"></div>
+            <canvas id="unity-canvas" style="width: 100%; height: 100%; display:block;"></canvas>
+            <div id="unity-mobile-warning">MOBILE DETECTED</div>
+        </div>
+        <div>
+            <div id="client-stats" class="stats"></div>
+            <div class="row video-group">
+                <div class="col"><p id="local-player-name" class="player-name"></p><div class="player-with-stats"><div id="local-player" class="player"></div><div id="local-stats" class="stream-stats stats"></div></div></div>
+                <div class="w-100"></div>
+                <div class="col"><div id="remote-playerlist"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UTILS -->
+    <canvas id="inMem_Canvas" height="450" width="450" style="display: none;"></canvas>
+    <canvas id="myCanvas" height="450" width="450" style="display: none;"></canvas>
+
+    <!-- UNITY LOADER -->
+    <script>
+        var unityInstance = null;
+        var isUnityReady = false;
+        var userClickedPlay = false;
+
+        var buildUrl = "Build";
+        var loaderUrl = buildUrl + "/Build1.loader.js";
+        var config = {
+            dataUrl: buildUrl + "/fb0834e122ff822fa2b1baee575b7fae.data",
+            frameworkUrl: buildUrl + "/188ca8ffa314abfb589addf39a4d8071.js",
+            codeUrl: buildUrl + "/30d53b705c0fb9a7c87346b601d5e43d.wasm",
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: "DefaultCompany",
+            productName: "Office Dar Blockchain",
+            productVersion: "0.1",
+        };
+
+        const container = document.querySelector("#unity-container");
+        const canvas = document.querySelector("#unity-canvas");
+        const loadingScreen = document.getElementById("loading-screen");
+        const loadBar = document.getElementById("load-bar");
+        const btnStatus = document.getElementById("btn-status");
+
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            container.className = "unity-mobile";
+            config.devicePixelRatio = 1;
+            document.getElementById("unity-mobile-warning").style.display = "block";
+        }
+
+        function handlePlay() {
+            userClickedPlay = true;
+            if (isUnityReady) enterGame();
+            else {
+                loadingScreen.classList.remove("hidden");
+                loadingScreen.style.opacity = "1";
+                loadingScreen.style.pointerEvents = "all";
+            }
+        }
+
+        function enterGame() {
+            loadingScreen.classList.add("hidden");
+            document.getElementById("landing-layer").style.opacity = "0";
+            document.body.classList.add("game-mode");
+            setTimeout(() => { document.getElementById("landing-layer").style.display = "none"; }, 800);
+
+            const game = document.getElementById("game-layer");
+            game.classList.add("active");
+            document.body.style.overflow = "hidden";
+
+            window.focus();
+            canvas.focus();
+            canvas.click();
+        }
+
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+            createUnityInstance(canvas, config, (progress) => {
+                const pct = Math.round(progress * 100);
+                loadBar.style.width = pct + "%";
+                btnStatus.innerText = `[${pct}%]`;
+            }).then((instance) => {
+                unityInstance = instance;
+                isUnityReady = true;
+                btnStatus.innerText = "[START]";
+                if (!userClickedPlay) loadingScreen.classList.add("hidden");
+                else enterGame();
+            }).catch((message) => { alert(message); });
+        };
+        document.body.appendChild(script);
+    </script>
+
+    <!-- AVATAR ENGINE & LOGIC -->
+    <script>
+        (function () {
+            const SPRITE_SIZE = 32;
+            const SCALE = 3;
+            const FRAMES = 3;
+            const PIXELS_FRAME = 15;
+            const ROW_DOWN = 0; const ROW_LEFT = 1; const ROW_RIGHT = 2; const ROW_UP = 3;
+
+            const world = document.getElementById('world-container');
+            const landingLayer = document.getElementById('landing-layer');
+
+            const lockedZoneIDs = ['zone-p2'];
+
+            class Actor {
+                constructor(x, y, options = {}) {
+                    this.x = x; this.y = y;
+                    this.targetX = x; this.targetY = y;
+                    this.type = options.type || 'static';
+                    this.frame = 1;
+                    this.row = options.row || ROW_DOWN;
+                    this.distAcc = 0;
+                    this.hitLocked = false;
+
+                    this.el = document.createElement('div');
+                    this.el.className = 'sprite';
+
+                    if (options.hue) this.el.style.filter = `hue-rotate(${options.hue}deg) drop-shadow(0 4px 4px rgba(0,0,0,0.5))`;
+
+                    if (this.type === 'player') {
+                        this.bubble = document.createElement('div');
+                        this.bubble.className = 'bubble';
+                        this.bubble.id = 'player-bubble-internal';
+                        this.el.appendChild(this.bubble);
+                    } else if (options.text) {
+                        this.bubble = document.createElement('div');
+                        this.bubble.className = 'bubble';
+                        this.bubble.innerText = options.text;
+                        this.el.appendChild(this.bubble);
+                    }
+
+                    if (this.type === 'patrol') {
+                        this.waypoints = options.waypoints || [];
+                        this.wpIndex = 0;
+                        this.patrolSpeed = 0.6;
+                        if (this.waypoints.length > 0) {
+                            this.targetX = this.waypoints[0].x;
+                            this.targetY = this.waypoints[0].y;
+                        }
+                    }
+                    world.appendChild(this.el);
+                }
+
+                update(playerX, playerY) {
+                    if (this.type === 'player') this.move(0.06);
+                    else if (this.type === 'patrol') this.patrolBox();
+
+                    // Proximity for NPC Bubbles
+                    if (this.type !== 'player' && this.bubble) {
+                        const dist = Math.hypot(this.x - playerX, this.y - playerY);
+                        if (dist < 100) {
+                            this.el.style.zIndex = 9999;
+                            this.bubble.classList.add('visible');
+                        } else {
+                            this.el.style.zIndex = Math.floor(this.y);
+                            this.bubble.classList.remove('visible');
+                        }
+                    }
+                    this.draw();
+                }
+
+                moveTo(tx, ty, speed) {
+                    if (this.type === 'player') {
+                        const scrollY = landingLayer.scrollTop;
+                        let blocked = false;
+
+                        lockedZoneIDs.forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) {
+                                const r = el.getBoundingClientRect();
+                                const zTop = r.top + scrollY;
+                                const zBottom = r.bottom + scrollY;
+
+                                if (tx > r.left && tx < r.right && ty > zTop && ty < zBottom) {
+                                    blocked = true;
+                                    el.classList.add('hit');
+                                    setTimeout(() => el.classList.remove('hit'), 200);
+                                }
+                            }
+                        });
+
+                        this.hitLocked = blocked;
+                        if (blocked) return false;
+                    }
+
+                    const dx = tx - this.x;
+                    const dy = ty - this.y;
+                    const dist = Math.hypot(dx, dy);
+
+                    if (dist > 5) {
+                        const mx = dx * speed;
+                        const my = dy * speed;
+                        this.x += mx; this.y += my;
+                        this.distAcc += Math.hypot(mx, my);
+
+                        if (this.distAcc > PIXELS_FRAME) {
+                            this.frame = (this.frame + 1) % FRAMES;
+                            this.distAcc = 0;
+                        }
+                        if (Math.abs(dx) > Math.abs(dy)) this.row = (dx > 0) ? ROW_RIGHT : ROW_LEFT;
+                        else this.row = (dy > 0) ? ROW_DOWN : ROW_UP;
+                        return false;
+                    }
+                    return true;
+                }
+
+                move(speed) {
+                    if (this.moveTo(this.targetX, this.targetY, speed)) {
+                        this.frame = 1;
+                        if (this.type === 'player') this.row = ROW_DOWN;
+                    }
+                }
+
+                patrolBox() {
+                    const wp = this.waypoints[this.wpIndex];
+                    const dx = wp.x - this.x; const dy = wp.y - this.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist > 5) {
+                        const mx = (dx / dist) * this.patrolSpeed;
+                        const my = (dy / dist) * this.patrolSpeed;
+                        this.x += mx; this.y += my;
+                        this.distAcc += Math.abs(this.patrolSpeed);
+                        if (this.distAcc > PIXELS_FRAME * 2) {
+                            this.frame = (this.frame + 1) % FRAMES;
+                            this.distAcc = 0;
+                        }
+                        if (Math.abs(dx) > Math.abs(dy)) this.row = (dx > 0) ? ROW_RIGHT : ROW_LEFT;
+                        else this.row = (dy > 0) ? ROW_DOWN : ROW_UP;
+                    } else {
+                        this.wpIndex = (this.wpIndex + 1) % this.waypoints.length;
+                    }
+                }
+
+                draw() {
+                    let transform = `translate3d(${this.x - 16}px, ${this.y - 16}px, 0) scale(${SCALE})`;
+                    this.el.style.transform = transform;
+                    const bgX = -(this.frame * SPRITE_SIZE);
+                    const bgY = -(this.row * SPRITE_SIZE);
+                    this.el.style.backgroundPosition = `${bgX}px ${bgY}px`;
+                    this.el.style.zIndex = Math.floor(this.y);
+                }
+            }
+
+            // --- INIT ---
+            const cw = window.innerWidth;
+            const ch = window.innerHeight;
+
+            const player = new Actor(cw / 2, ch * 0.75, { type: 'player' });
+            const actors = [player];
+
+            // 1. TECH (LOCKED ROOM - P2)
+            actors.push(new Actor(cw * 0.1, ch * 0.47, { hue: 0, row: ROW_RIGHT, text: "Compiling..." }));
+
+            // 2. GOSSIPERS (Moved UP near Meeting Hub)
+            actors.push(new Actor(cw * 0.75, ch * 0.55, { hue: 120, row: ROW_LEFT, text: "Did you see?" }));
+            actors.push(new Actor(cw * 0.75 - 60, ch * 0.57, { hue: 40, row: ROW_RIGHT, text: "Yeah, live now." }));
+
+            // 3. GUARD (CORRIDOR - LEFT)
+            const guardWps = [
+                { x: cw * 0.22, y: ch * 0.25 },
+                { x: cw * 0.22, y: ch * 0.65 }
+            ];
+            actors.push(new Actor(cw * 0.22, ch * 0.25, { type: 'patrol', waypoints: guardWps, hue: 290, text: "SECURE" }));
+
+            // --- INPUT ---
+            landingLayer.addEventListener('mousemove', e => {
+                if (document.body.classList.contains('game-mode')) return;
+                player.targetX = e.clientX;
+                player.targetY = e.clientY + landingLayer.scrollTop;
+            });
+
+            const onlineBadge = document.getElementById('online-counter');
+            setInterval(() => {
+                const count = Math.floor(Math.random() * (120 - 80) + 80);
+                onlineBadge.innerHTML = `● ${count} ONLINE`;
+            }, 3000);
+
+            function resizeWorld() {
+                const contentHeight = landingLayer.scrollHeight;
+                world.style.height = contentHeight + 'px';
+            }
+            window.addEventListener('resize', resizeWorld);
+            setTimeout(resizeWorld, 100);
+
+            // --- ZONES (Excluding P2 which is locked-only) ---
+            const zoneConfig = [
+                { id: 'zone-p1', msg: 'PVT DESK // ISOLATED' },
+                { id: 'zone-p3', msg: 'PVT DESK // ISOLATED' },
+                { id: 'zone-broadcast', msg: 'MEETING HUB // OPEN' }
+            ];
+
+            function loop() {
+                if (document.body.classList.contains('game-mode')) return;
+
+                if (Math.random() < 0.05) resizeWorld();
+                actors.forEach(a => a.update(player.x, player.y));
+
+                // --- PRIORITY 1: LOCKED WALL HIT ---
+                if (player.hitLocked) {
+                    player.bubble.innerText = "LOCKED";
+                    player.bubble.classList.add('visible', 'alert');
+
+                    // Stop checking other zones to avoid overwriting "LOCKED"
+                    requestAnimationFrame(loop);
+                    return;
+                }
+
+                // --- PRIORITY 2: ZONE INFOS ---
+                let active = false;
+                const scrollY = landingLayer.scrollTop;
+
+                zoneConfig.forEach(z => {
+                    const el = document.getElementById(z.id);
+                    if (!el) return;
+
+                    const r = el.getBoundingClientRect();
+                    const zTop = r.top + scrollY;
+                    const zBottom = r.bottom + scrollY;
+
+                    if (player.x > r.left && player.x < r.right && player.y > zTop && player.y < zBottom) {
+                        el.classList.add('active');
+                        player.bubble.innerText = z.msg;
+                        player.bubble.classList.add('visible');
+                        player.bubble.classList.remove('alert');
+                        active = true;
+                    } else {
+                        el.classList.remove('active');
+                    }
+                });
+
+                if (!active) {
+                    player.bubble.classList.remove('visible');
+                    player.bubble.classList.remove('alert');
+                }
+
+                requestAnimationFrame(loop);
+            }
+            loop();
+        })();
+    </script>
+</body>
+</html>

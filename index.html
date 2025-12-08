@@ -58,6 +58,7 @@
             --accent-primary: #D0E3E8; /* Medical Blue */
             --accent-glow: rgba(208, 227, 232, 0.1);
             --accent-alert: #FF3B30;
+            --accent-success: #00E676; /* Green for Ready state */
             --font-pixel: 'Pixelify Sans', sans-serif;
             --font-display: 'Space Grotesk', sans-serif;
             --font-code: 'JetBrains Mono', monospace;
@@ -198,14 +199,14 @@
             }
 
         .hero-eyebrow {
-            font-family: var(--font-pixel); /* NEW PIXEL FONT */
-            font-size: clamp(8rem, 25vw, 20rem); /* Massive scaling */
+            font-family: var(--font-pixel);
+            font-size: clamp(8rem, 25vw, 20rem);
             line-height: 0.75;
             font-weight: 700;
             color: var(--text-main);
             margin-bottom: 30px;
             letter-spacing: -0.08em;
-            text-shadow: 4px 4px 0px rgba(255,255,255,0.05); /* Structural Shadow */
+            text-shadow: 4px 4px 0px rgba(255,255,255,0.05);
         }
 
         .hero-sub {
@@ -231,12 +232,13 @@
             font-weight: 700;
             padding: 18px 45px;
             border: 1px solid var(--text-main);
-            cursor: pointer;
+            cursor: wait; /* Default to wait */
             text-transform: uppercase;
             transition: all 0.25s cubic-bezier(0.215, 0.610, 0.355, 1.000);
             position: relative;
             overflow: hidden;
             letter-spacing: 1px;
+            opacity: 0.7;
         }
 
             .btn-industrial::before {
@@ -253,15 +255,34 @@
                 transition: transform 0.25s cubic-bezier(0.215, 0.610, 0.355, 1.000);
             }
 
-            .btn-industrial:hover {
-                color: #000;
-                border-color: var(--text-main);
+            /* Active State (Added dynamically) */
+            .btn-industrial.ready {
+                cursor: pointer;
+                opacity: 1;
+                border-color: var(--accent-primary);
+                color: #fff;
+                box-shadow: 0 0 20px rgba(208, 227, 232, 0.2);
+                animation: pulse-ready 2s infinite;
             }
 
-                .btn-industrial:hover::before {
-                    transform: scaleX(1);
-                    transform-origin: left;
+                .btn-industrial.ready:hover {
+                    color: #000;
+                    background: var(--accent-primary);
                 }
+
+        @keyframes pulse-ready {
+            0% {
+                box-shadow: 0 0 0 0 rgba(208, 227, 232, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(208, 227, 232, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(208, 227, 232, 0);
+            }
+        }
 
         /* Scroll Indicator */
         .scroll-hint {
@@ -319,12 +340,11 @@
             color: var(--text-main);
         }
 
-        /* Perfect Pixel Grid */
         .manual-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1px;
-            background-color: rgba(255,255,255,0.15); /* Defines borders */
+            background-color: rgba(255,255,255,0.15);
             border: 1px solid rgba(255,255,255,0.15);
         }
 
@@ -454,13 +474,6 @@
                 border-color: var(--text-main);
             }
 
-            .tag-box span {
-                font-size: 1rem;
-                line-height: 0;
-                position: relative;
-                top: -1px;
-            }
-
         .catalog-box {
             border: 1px solid #fff;
             padding: 25px;
@@ -495,7 +508,7 @@
             text-transform: uppercase;
         }
 
-        /* --- ZONES & SPRITES (Visual Flavor) --- */
+        /* --- ZONES & SPRITES --- */
         #world-container {
             position: absolute;
             top: 0;
@@ -615,7 +628,7 @@
             padding: 5px 8px;
             white-space: nowrap;
             opacity: 0;
-            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.15s;
             box-shadow: 3px 3px 0px rgba(0,0,0,1);
             z-index: 200;
         }
@@ -641,37 +654,6 @@
                 opacity: 1;
                 transition: opacity 0.5s ease;
             }
-
-        #loading-screen {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-dark);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.5s;
-        }
-
-        .loader-bar-bg {
-            width: 220px;
-            height: 2px;
-            background: #222;
-            margin-top: 25px;
-        }
-
-        .loader-bar {
-            height: 100%;
-            width: 0%;
-            background: var(--accent-primary);
-            transition: width 0.2s;
-        }
-
-        .hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
 
         #unity-mobile-warning {
             display: none;
@@ -733,11 +715,12 @@
             <div class="hero-sub">
                 <span>OfficeVerse // Web Portal</span>
                 A virtual workspace for your browser.<br>
-                No downloads required.
+                Resources loading in background...
             </div>
 
-            <button class="btn-industrial" onclick="handlePlay()">
-                Enter System <span id="btn-status" style="color:rgba(255,255,255,0.3); margin-left:5px;">[WAIT]</span>
+            <!-- BUTTON ACTS AS PROGRESS INDICATOR INITIALLY -->
+            <button id="enter-button" class="btn-industrial" onclick="handlePlay()">
+                Enter System <span id="btn-status" style="color:rgba(255,255,255,0.4); margin-left:5px;">[WAIT]</span>
             </button>
 
             <!-- VISUAL HUD ELEMENTS -->
@@ -861,14 +844,6 @@
         </div>
     </div>
 
-    <!-- LOADING OVERLAY -->
-    <div id="loading-screen">
-        <div style="font-family:var(--font-code); font-size:0.7rem; color: #fff; margin-bottom:10px; letter-spacing:1px;">LOADING RESOURCES</div>
-        <div class="loader-bar-bg">
-            <div class="loader-bar" id="load-bar"></div>
-        </div>
-    </div>
-
     <!-- UNITY CONTAINER -->
     <div id="game-layer">
         <div class="webgl-content" style="width: 100%; height: 100%;">
@@ -894,14 +869,13 @@
     <script>
         var unityInstance = null;
         var isUnityReady = false;
-        var userClickedPlay = false;
 
         var buildUrl = "Build";
         var loaderUrl = buildUrl + "/Build1.loader.js";
         var config = {
-            dataUrl: buildUrl + "/ef31273a891452be76f8fbb09212ecc3.data",
-            frameworkUrl: buildUrl + "/cf74d4fd34225311ab3ad1652d814c19.js",
-            codeUrl: buildUrl + "/353e837910c855976b53d0341a79ce51.wasm",
+            dataUrl: buildUrl + "/1e688e371e13e5bbc65e9e211189b396.data",
+            frameworkUrl: buildUrl + "/86ba5ad1d26292c12872c70f4bc3d562.js",
+            codeUrl: buildUrl + "/bb1bb9ac5fad0542627788c3317e5744.wasm",
             streamingAssetsUrl: "StreamingAssets",
             companyName: "DarBlockChain-MedAliHkiri",
             productName: "OfficeVerse",
@@ -910,9 +884,8 @@
 
         const container = document.querySelector("#unity-container");
         const canvas = document.querySelector("#unity-canvas");
-        const loadingScreen = document.getElementById("loading-screen");
-        const loadBar = document.getElementById("load-bar");
         const btnStatus = document.getElementById("btn-status");
+        const enterBtn = document.getElementById("enter-button");
 
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
             container.className = "unity-mobile";
@@ -920,50 +893,47 @@
             document.getElementById("unity-mobile-warning").style.display = "block";
         }
 
+        // Trigger transition to Game Layer
         function handlePlay() {
-            userClickedPlay = true;
-            if (isUnityReady) enterGame();
-            else {
-                loadingScreen.classList.remove("hidden");
-                loadingScreen.style.opacity = "1";
-                loadingScreen.style.pointerEvents = "all";
-            }
-        }
+            if (!isUnityReady) return; // Ignore clicks until loaded
 
-        function enterGame() {
-            loadingScreen.classList.add("hidden");
+            document.getElementById("landing-layer").style.transition = "opacity 0.8s ease";
             document.getElementById("landing-layer").style.opacity = "0";
             document.body.classList.add("game-mode");
-            setTimeout(() => { document.getElementById("landing-layer").style.display = "none"; }, 800);
 
-            const game = document.getElementById("game-layer");
-            game.classList.add("active");
-            document.body.style.overflow = "hidden";
-            window.focus();
-            canvas.focus();
-            canvas.click();
+            setTimeout(() => {
+                document.getElementById("landing-layer").style.display = "none";
+                const game = document.getElementById("game-layer");
+                game.classList.add("active");
+                document.body.style.overflow = "hidden";
+                window.focus();
+                canvas.focus();
+                canvas.click(); // Needed to initialize audio contexts in some browsers
+            }, 800);
         }
 
+        // LOAD UNITY IMMEDIATELY IN BACKGROUND
         var script = document.createElement("script");
         script.src = loaderUrl;
         script.onload = () => {
             createUnityInstance(canvas, config, (progress) => {
+                // UPDATE BUTTON TEXT WITH PROGRESS
                 const pct = Math.round(progress * 100);
-                loadBar.style.width = pct + "%";
-                btnStatus.innerText = `[${pct}%]`;
+                btnStatus.innerText = `[LOADING ${pct}%]`;
             }).then((instance) => {
+                // UNITY READY
                 unityInstance = instance;
                 isUnityReady = true;
-                btnStatus.innerText = "[START]";
-                btnStatus.style.color = "#fff";
-                if (!userClickedPlay) loadingScreen.classList.add("hidden");
-                else enterGame();
+
+                // UPDATE BUTTON VISUALS
+                btnStatus.innerText = "[ACCESS GRANTED]";
+                enterBtn.classList.add('ready');
             }).catch((message) => { alert(message); });
         };
         document.body.appendChild(script);
     </script>
 
-    <!-- AVATAR ENGINE & LOGIC -->
+    <!-- AVATAR ENGINE & LOGIC (Visual Background) -->
     <script>
         (function () {
             const SPRITE_SIZE = 32;
